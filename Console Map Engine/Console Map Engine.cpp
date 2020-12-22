@@ -97,7 +97,7 @@ int main()
 	mainMenu.createEntry(3, "Quit", &game, &GameState::quitGame);
 
 	//optionsMenu.createEntry(0, "Resolution", &intoResolutionMenu, &MenuHandle::SubMenu::enter);
-	optionsMenu.createEntry(1, "Music", &intoMusicMenu, &MenuHandle::SubMenu::enter);
+	optionsMenu.createEntry(0, "Music", &intoMusicMenu, &MenuHandle::SubMenu::enter);
 
 	/*
 	resolutionMenu.createEntry(0, "Fullscreen", &renderer, &Renderer::fullscreen);
@@ -138,7 +138,7 @@ int main()
 
 		if (events.anyEvent()  || launch) {
 			events.transmitEvents();
-
+			
 			//Render world
 			if (game.inGame() && frameRate < Event::timeElapsed) {
 				renderer.update(&world, player.getViewFrame());

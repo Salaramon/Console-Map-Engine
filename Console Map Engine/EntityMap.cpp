@@ -26,7 +26,7 @@ size_t EntityMap::getIndex(Entity entity) {
 
 size_t EntityMap::getIndex(intmax_t x, intmax_t y) {
 	for (size_t i = 0; i < entities.size(); i++) {
-		if (entities[i]->x == x && entities[i]->y == y) {
+		if (std::trunc(entities[i]->x) == x && std::trunc(entities[i]->y) == y) {
 			return i;
 		}
 	}
