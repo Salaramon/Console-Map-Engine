@@ -4,11 +4,6 @@
 
 #include <Interfaces.h>
 
-#include "WorldCoordinate.h"
-
-
-class EntityMap;
-
 class Entity
 {
 	
@@ -27,6 +22,18 @@ class Entity
 public:
 
 	Entity();
+	Entity(size_t x, size_t y);
+
+	bool operator==(Entity const& other) const {
+		return other.id == id;
+	}
+
+	struct EntityHasher {
+		std::size_t operator()(const Entity& type) const {
+			std::size_t h = std::hash<size_t>{}(type.id);
+			return h;
+		}
+	};
 
 	enum class Type {
 		NONE,
@@ -34,33 +41,18 @@ public:
 		WILD
 	};
 
-	Entity(size_t x, size_t y);
 	char getGraphic();
+	size_t getID();
 
-	bool operator==(Entity const& other) const {
-		return other.id == id;
-	}
-	struct EntityHasher {
-		std::size_t operator()(const Entity& type) const {
-			std::size_t h = std::hash<int>{}(type.id);
-			return h;
-		}
-	};
+	virtual void move(double_t x, double_t y);
 
-	WorldCoordinate getPosition();
-
-	//void setOwner(EntityMap* entityMap);
+	double_t x, y;
+protected:
 
 	size_t id;
 	static size_t nextID;
 
-	typedef std::unordered_multimap<Entity, WorldCoordinate, EntityHasher> uMultimapEntityCoordinate;
-	intmax_t x, y;
-
-	virtual void move(size_t x, size_t y);
-protected:
-
-	//EntityMap* owner;
 	Type entityType = Type::NONE;
 	char graphic = '?';
 };
+

@@ -1,76 +1,62 @@
 #pragma once
 
 #include <Windows.h>
-#include <iostream>
 #include <vector>
 #include <chrono>
 
-#include <boost/serialization/split_member.hpp>
-
 #include <Interfaces.h>
 
-
+typedef char KEY;
 struct Key {
-	Key(WORD key, bool pressedAction, double time, size_t cycle) {
-		charCode = key;
-		stateCode = pressedAction;
-		timeStamp = time;
-		eventCycle = cycle;
-	}
-
+	Key(char charCode, bool stateCode) : charCode(charCode), stateCode(stateCode) {}
 	char charCode;
 	bool stateCode;
-	double timeStamp;
-	size_t eventCycle;
 
 	static const bool RELEASED = 0;
 	static const bool PRESSED = 1;
 
-	static const char W = 0x57;
-	static const char A = 0x41;
-	static const char S = 0x53;
-	static const char D = 0x44;
-	static const char E = 0x45;
-	static const char ESC = 0x1B;
+	static const KEY W = 0x57;
+	static const KEY A = 0x41;
+	static const KEY S = 0x53;
+	static const KEY D = 0x44;
+	static const KEY E = 0x45;
+	static const KEY ESC = 0x1B;
+	static const KEY LSHIFT = 0xA0;
 };
 
-class Event : protected iul::Subject<Key>
+typedef std::vector<Key> Keys;
+
+class Event : protected iul::Subject<Keys, double_t>
 {
 public:
 	Event();
 
-	struct Receiver : public iul::Observer<Key> {
+	struct Receiver : public iul::Observer<Keys, double_t> {
 
-		friend boost::serialization::access;
-
-		template <class Archive>
-		void save(Archive& ar, const unsigned int version) const {
-
-		}
-		template <class Archive>
-		void load(Archive& ar, const unsigned int version) {
-			
-		}
-		BOOST_SERIALIZATION_SPLIT_MEMBER()
-
-		virtual void observerResponse(Key key) override {
-			response(key);
+		virtual void observerResponse(Keys keys, double_t timeStamp) override {
+			response(keys, timeStamp);
 		};
-		virtual void response(Key key) = 0;
+		virtual void response(Keys key, double_t timeStamp) = 0;
 	};
 
 	void addReceiver(Event::Receiver* receiver, size_t priority);
-
+	void pollEvents();
 	void transmitEvents();
+	bool anyEvent();
 
+	static double_t deltaTime;
 	static const size_t PRIORITY_LAST = SIZE_MAX;
+	static double_t timeElapsed;
+
 private:
+
+	std::vector<Key> keyStack;
+	double_t eventTime;
 	size_t priorityMax;
 	HANDLE handleInput;
 	BYTE keyboardStateIgnoreList[256];
 	std::vector<bool> wasPressed;
-	std::chrono::steady_clock::time_point runTime = std::chrono::steady_clock::now();
-	size_t runCycle = 0;
+	static std::chrono::steady_clock::time_point runTime;
 
 };
 

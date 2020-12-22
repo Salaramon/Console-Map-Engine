@@ -1,17 +1,73 @@
 #include "MenuHandle.h"
 
-Menu* MenuHandle::getActiveMenu()
+MenuHandle::MenuHandle()
 {
-	for (auto menu : menuList) {
-		if (menu->accessed) {
-			return menu;
-		}
-	}
-
-	return nullptr;
+	enabled = true;
 }
 
-void MenuHandle::addMenu(Menu* menu)
+Menu* MenuHandle::getActiveMenu()
 {
-	menuList.push_back(menu);
+	return activeMenu;
+}
+
+void MenuHandle::addSubMenu(Menu* from, Menu* into) {
+	menuList.emplace(into, from);
+}
+
+void MenuHandle::setKeyMenu(Menu* menu, KEY key)
+{
+	keyMenu = menu;
+	keyMenuKey = key;
+}
+
+void MenuHandle::menuEnter(Menu* menu)
+{
+	activeMenu = menu;
+}
+
+void MenuHandle::menuReturn()
+{
+	if (activeMenu != keyMenu) {
+		menuStackPop();
+	}
+	else {
+		activeMenu = nullptr;
+	}
+}
+
+void MenuHandle::setActiveMenu(Menu* menu)
+{
+	activeMenu = menu;
+}
+
+void MenuHandle::disableMenu()
+{
+	enabled = false;
+}
+
+void MenuHandle::enableMenu()
+{
+	enabled = true;
+}
+
+bool MenuHandle::isEnabled()
+{
+	return enabled;
+}
+
+void MenuHandle::menuStackPush(Menu* menu)
+{
+	menuStack.push_back(menu);
+	setActiveMenu(menu);
+}
+
+void MenuHandle::menuStackPop()
+{
+	menuStack.pop_back();
+	if (!menuStack.empty()) {
+		setActiveMenu(menuStack.back());
+	}
+	else {
+		activeMenu = keyMenu;
+	}
 }

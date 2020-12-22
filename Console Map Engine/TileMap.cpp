@@ -1,24 +1,28 @@
 ﻿#include "TileMap.h"
 
 
-const char TileMap::at(size_t x, size_t y) {
+TileMap::TileMap() {}
+
+
+const char TileMap::at(intmax_t x, intmax_t y) {
 	
 	char character;
-	WorldCoordinate coordinate = WorldCoordinate(x, y);
+	WorldCoordinate coordinate(x, y);
 	auto tileMapIterator = tileMap.find(coordinate);
 	if (tileMapIterator == tileMap.end()) {
-		tileMapIterator = generateTile(coordinate);
+		tileMapIterator = generateTile(x,y);
 	}
 	character = tileMapIterator->second.getGraphic();
 
 	return character;
 }
 
-uMapTile::iterator TileMap::generateTile(WorldCoordinate coordinate) {
-	return tileMap.emplace(coordinate, Tile::generate(coordinate)).first;
+TileMap::uMapTile::iterator TileMap::generateTile(intmax_t x, intmax_t y) {
+	WorldCoordinate coordinate(x, y);
+	return tileMap.emplace(coordinate, Tile::generate(x, y)).first;
 }
 
-void TileMap::placeTile(Tile tile, size_t x, size_t y)
+void TileMap::placeTile(Tile tile, intmax_t x, intmax_t y)
 {
 	WorldCoordinate position(x, y);
 	auto iterator = tileMap.find(position);
@@ -27,3 +31,4 @@ void TileMap::placeTile(Tile tile, size_t x, size_t y)
 	}
 	tileMap.emplace(position, tile);
 }
+

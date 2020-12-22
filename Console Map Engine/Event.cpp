@@ -1,10 +1,13 @@
 #include "Event.h"
 
+std::chrono::steady_clock::time_point Event::runTime = std::chrono::steady_clock::now();
+double_t Event::deltaTime = 0;
+double_t Event::timeElapsed = 0;
+
 Event::Event()
 {
 	wasPressed = std::vector<bool>(256, false);
 	handleInput = GetStdHandle(STD_INPUT_HANDLE);
-	GetKeyboardState(&keyboardStateIgnoreList[0]);
 }
 
 void Event::addReceiver(Event::Receiver* receiver, size_t priority)
@@ -15,45 +18,50 @@ void Event::addReceiver(Event::Receiver* receiver, size_t priority)
 	addObserver(receiver, priority);
 }
 
-void Event::transmitEvents()
-{
-	std::vector<SHORT> keyEventStack;
-	std::vector<bool> keyStateStack;
-	SHORT checkKey;
+void Event::pollEvents() {
 
+	//Get timings
+	double_t newElapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - runTime).count();
+	deltaTime = newElapsed - timeElapsed;
+	timeElapsed = newElapsed;
+	eventTime = timeElapsed;
+
+	//Key stack retriever
 	for (int i = 0; i < 256; i++) {
+		SHORT checkKey;
 		if (i != 240 && i != 242) {
 			checkKey = GetKeyState(i);
 			SHORT shift = ((sizeof(SHORT) * 8) - 1);
 			SHORT keyCode = checkKey & (1 << shift);
 			bool keyIsPressed = keyCode;
-
-			if (keyIsPressed != wasPressed[i]) {
-				keyStateStack.push_back((wasPressed[i] ^ keyIsPressed) & keyIsPressed);
-				keyEventStack.push_back(i);
-				wasPressed[i] = keyStateStack.back();
+			if (keyIsPressed) {
+				if (wasPressed[i]) {
+					keyStack.push_back(Key(i, false));
+				}
+				else {
+					keyStack.push_back(Key(i, true));
+				}
+				wasPressed[i] = true;
 			}
-
-			if (keyIsPressed && wasPressed[i]) {
-				keyStateStack.push_back(false);
-				keyEventStack.push_back(i);
+			else {
+				wasPressed[i] = false;
 			}
 		}
 	}
+}
 
+void Event::transmitEvents()
+{
+	//Notify all clients with occured events
 	for (size_t order = 0; order <= priorityMax; order++) {
 
-		if (!keyEventStack.empty()) {
-			for (int i = 0; i < keyEventStack.size(); i++) {
-				double time = std::chrono::duration<double>(std::chrono::steady_clock::now() - runTime).count();
-				notifyObservers(Key(keyEventStack[i], keyStateStack[i], time, runCycle), order);
-			}
+		if (!keyStack.empty()) {
+				notifyObservers(keyStack, eventTime, order);
 		}
-		if (priorityMax == order && !keyEventStack.empty()) {
-			runCycle++;
-		}
-		
 	}
-	
+	keyStack.clear();
+}
 
+bool Event::anyEvent() {
+	return !keyStack.empty();
 }

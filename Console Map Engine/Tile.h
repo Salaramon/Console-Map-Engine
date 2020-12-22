@@ -1,14 +1,8 @@
 #pragma once
 
-#include <memory>
-#include <algorithm>
-#include <unordered_map>
-
 #include <boost/serialization/split_member.hpp>
 
 #include <Interfaces.h>
-
-#include "WorldCoordinate.h"
 
 
 
@@ -36,7 +30,7 @@ public:
 
 	char getGraphic();
 	
-	static Tile generate(WorldCoordinate seed);
+	static Tile generate(intmax_t x, intmax_t y);
 
 private:
 	char graphic;

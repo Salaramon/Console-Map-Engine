@@ -29,7 +29,6 @@ public:
 
 	void move(size_t x, size_t y);
 	
-
 	size_t x, y, w, h;
 };
 

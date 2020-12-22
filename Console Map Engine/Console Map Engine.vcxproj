@@ -158,10 +158,10 @@
     <ClCompile Include="EntityMap.cpp" />
     <ClCompile Include="Event.cpp" />
     <ClCompile Include="GameState.cpp" />
-    <ClCompile Include="Identity.cpp" />
     <ClCompile Include="Menu.cpp" />
     <ClCompile Include="MenuHandle.cpp" />
     <ClCompile Include="Music.cpp" />
+    <ClCompile Include="Plate.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Scape.cpp" />
@@ -169,7 +169,6 @@
     <ClCompile Include="ViewFrame.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="TileMap.cpp" />
-    <ClCompile Include="WorldCoordinate.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Character.h" />
@@ -178,10 +177,10 @@
     <ClInclude Include="EntityMap.h" />
     <ClInclude Include="Event.h" />
     <ClInclude Include="GameState.h" />
-    <ClInclude Include="Identity.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="MenuHandle.h" />
     <ClInclude Include="Music.h" />
+    <ClInclude Include="Plate.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Scape.h" />
@@ -189,7 +188,6 @@
     <ClInclude Include="ViewFrame.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="TileMap.h" />
-    <ClInclude Include="WorldCoordinate.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

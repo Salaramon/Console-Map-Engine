@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cmath>
 
 #include <boost/serialization/split_member.hpp>
 
@@ -29,10 +30,10 @@ class Scape
 
 public:
 	size_t w, h;
-	intmax_t x, y;
-	virtual const char at(size_t x, size_t y) = 0;
+	double_t x, y;
+	virtual const char at(intmax_t x, intmax_t y) = 0;
 	ViewFrame getViewFrame(size_t x, size_t y);
-	void move(size_t x, size_t y);
+	void move(double_t x, double_t y);
 
 };
 

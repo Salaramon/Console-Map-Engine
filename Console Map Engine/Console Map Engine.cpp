@@ -1,26 +1,6 @@
 // Console Map Engine.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <Windows.h>
-#include <thread>
-#include <chrono>
-#include <vector>
-#include <ratio>
-#include <functional>
-
-#include <boost/serialization/serialization.hpp>
-
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/utility.hpp>
-
-#include <MidiFile.h>
-
-#include "csv.h"
-
 #include "Event.h"
 #include "Player.h"
 #include "TileMap.h"
@@ -32,111 +12,152 @@
 #include "Menu.h"
 #include "EntityMap.h"
 #include "MenuHandle.h"
+#include "Plate.h"
+
+void initializeMapScape(Renderer* renderer, Scape* scape) {
+	const size_t zoom = 1;
+	scape->w = renderer->getWidth() / zoom;
+	scape->h = renderer->getHeight() / zoom;
+	scape->x = -static_cast<intmax_t>(renderer->getWidth() / (2 * zoom));
+	scape->y = -static_cast<intmax_t>(renderer->getHeight() / (2 * zoom));
+}
 
 
 int main()
 {
-	const size_t zoom = 1;
+	//Create window.
+	Window window(1024,720); 
+	Renderer renderer(&window); 
 
-	Window window(1024, 720); //Fullscreen is odd
-	Renderer renderer(&window); //other overload character size
 
+	//Create and initialize game world.
 	TileMap world;
-	world.w = renderer.buffer.lineColumns/zoom;
-	world.h = renderer.buffer.lineRows/zoom;
-	world.x = -static_cast<intmax_t>(renderer.buffer.lineColumns / (2 * zoom));
-	world.y = -static_cast<intmax_t>(renderer.buffer.lineRows/ (2 * zoom));
+	EntityMap entities;
 
-	EntityMap entityMap;
-	entityMap.w = renderer.buffer.lineColumns / zoom;
-	entityMap.h = renderer.buffer.lineRows / zoom;
-	entityMap.x = -static_cast<intmax_t>(renderer.buffer.lineColumns / (2 * zoom));
-	entityMap.y = -static_cast<intmax_t>(renderer.buffer.lineRows / (2 * zoom));
+	initializeMapScape(&renderer, &world);
+	initializeMapScape(&renderer, &entities);
 
 
-	Event events;
-
+	//Create player character in game world.
 	Player player(
 		Character(0, 0),
-		ViewFrame(0, 0, renderer.buffer.lineColumns, renderer.buffer.lineRows),
+		ViewFrame(0, 0, renderer.getWidth(), renderer.getHeight()),
 		&world,
-		&entityMap
+		&entities
 	);
-	entityMap.addEntity(&player.character);
+	entities.addEntity(&player.character);
 
+
+	//Setup and play game music
 	Music mainTheme;
 	mainTheme.load("Karl's & Isak's Dungeon Adventure (LetsGo).mid");
 	mainTheme.loop();
 	mainTheme.play();
 
 
+	//Initialize menu structure
+	MenuHandle mainMenuController;
+	MenuHandle playerMenuController;
+
 	Menu mainMenu;
 	Menu optionsMenu;
 	Menu playerMenu;
-	Menu playerOptionsMenu;
+	Menu musicMenu;
+	//Menu resolutionMenu;
 
-	mainMenu.accessed = true;
+	//Setup key menus
+	mainMenuController.setKeyMenu(&mainMenu, Key::ESC);
+	playerMenuController.setKeyMenu(&playerMenu, Key::ESC);
+	mainMenuController.setActiveMenu(&mainMenu);
+	playerMenuController.disableMenu();
 
-	GameState game(&player, &mainMenu, &playerMenu, &world, &entityMap);
+	//Setup sub-menus
+	MenuHandle::SubMenu intoOptionsMenu(&optionsMenu);
+	intoOptionsMenu.addHandle(&mainMenuController);
+	intoOptionsMenu.addHandle(&playerMenuController);
+	/*
+	MenuHandle::SubMenu intoResolutionMenu(&resolutionMenu);
+	intoResolutionMenu.addHandle(&mainMenuController);
+	intoResolutionMenu.addHandle(&playerMenuController);
+	*/
 
-	
-	Menu::MenuSwap swapMainMenuOptions(&mainMenu, &optionsMenu);
-
-	mainMenu.createElement(0, "Continue", &game, &GameState::loadGame);
-	mainMenu.createElement(1, "New Game", &game, &GameState::newGame);
-	mainMenu.createElement(2, "Options", &swapMainMenuOptions, &Menu::MenuSwap::swap);
-	mainMenu.createElement(3, "Quit", &game, &GameState::quitGame);
-
-	optionsMenu.createElement(0, "Play", &mainTheme, &Music::play);
-	optionsMenu.createElement(1, "Pause", &mainTheme, &Music::pause); //Not working
-	optionsMenu.createElement(2, "Stop", &mainTheme, &Music::stop);
-	optionsMenu.createElement(3, "Return", &swapMainMenuOptions, &Menu::MenuSwap::swap);
-
-
-	Menu::MenuSwap swapPlayerMenuOptions(&playerMenu, &playerOptionsMenu);
-
-	playerMenu.createElement(0, "Options", &swapPlayerMenuOptions, &Menu::MenuSwap::swap);
-	playerMenu.createElement(1, "Save", &game, &GameState::saveGame);
-	playerMenu.createElement(2, "Load", &game, &GameState::loadGame);
-	playerMenu.createElement(3, "Quit", &game, &GameState::quitGame);
-
-	playerOptionsMenu.createElement(0, "Play", &mainTheme, &Music::play);
-	playerOptionsMenu.createElement(1, "Pause", &mainTheme, &Music::pause); //Not working
-	playerOptionsMenu.createElement(2, "Stop", &mainTheme, &Music::stop);
-	playerOptionsMenu.createElement(3, "Return", &swapPlayerMenuOptions, &Menu::MenuSwap::swap);
-	
-
-	MenuHandle menuController;
-	menuController.addMenu(&mainMenu);
-	menuController.addMenu(&optionsMenu);
-	menuController.addMenu(&playerMenu);
-	menuController.addMenu(&playerOptionsMenu);
+	MenuHandle::SubMenu intoMusicMenu(&musicMenu);
+	intoMusicMenu.addHandle(&mainMenuController);
+	intoMusicMenu.addHandle(&playerMenuController);
 
 
+	//Setup game state controller... handles cross communication on appklication wide events.
+	GameState game(&player, &mainMenuController, &playerMenuController, &world, &entities);
+
+
+	//Construct menus
+	mainMenu.createEntry(0, "Continue", &game, &GameState::loadGame);
+	mainMenu.createEntry(1, "New Game", &game, &GameState::newGame);
+	mainMenu.createEntry(2, "Options", &intoOptionsMenu, &MenuHandle::SubMenu::enter);
+	mainMenu.createEntry(3, "Quit", &game, &GameState::quitGame);
+
+	//optionsMenu.createEntry(0, "Resolution", &intoResolutionMenu, &MenuHandle::SubMenu::enter);
+	optionsMenu.createEntry(1, "Music", &intoMusicMenu, &MenuHandle::SubMenu::enter);
+
+	/*
+	resolutionMenu.createEntry(0, "Fullscreen", &renderer, &Renderer::fullscreen);
+	resolutionMenu.createEntry(1, "800x600", &renderer, &Renderer::r800x600);
+	resolutionMenu.createEntry(2, "1024x720", &renderer, &Renderer::r1024x720);
+	*/
+
+	musicMenu.createEntry(0, "Play", &mainTheme, &Music::play);
+	musicMenu.createEntry(1, "Pause", &mainTheme, &Music::pause);
+	musicMenu.createEntry(2, "Stop", &mainTheme, &Music::stop);
+
+	playerMenu.createEntry(0, "Save", &game, &GameState::saveGame);
+	playerMenu.createEntry(1, "Load", &game, &GameState::loadGame);
+	playerMenu.createEntry(2, "Options", &intoOptionsMenu, &MenuHandle::SubMenu::enter);
+	playerMenu.createEntry(3, "Quit", &game, &GameState::quitGame);
+
+
+	//Opaque blank square.
+	Plate menuPlate(20, 10);
+
+
+	//Add event client objects
+	Event events;
 	events.addReceiver(&player, 0);
-	events.addReceiver(&playerMenu,0);
-	events.addReceiver(&optionsMenu, 0);
-	events.addReceiver(&playerOptionsMenu, 0);
-	events.addReceiver(&mainMenu, 0);
-	events.addReceiver(&game, 0);
+	events.addReceiver(&mainMenuController,1);
+	events.addReceiver(&playerMenuController, 0);
 
-	std::chrono::steady_clock::time_point gameTimerStart = std::chrono::steady_clock::now();
-	double frameRate = 1 / 20;
 
+	//Max framerate
+	double frameRate = 1 / 60;
+	//Runs game loop once
+	bool launch = true;
+
+
+	//Ladies and gentlemen, what you all have been waiting for... the game loop!
     while (game.isRunning()) {
-        events.transmitEvents();
+        events.pollEvents();
 
-		if (game.anyEvent() && frameRate < std::chrono::duration<double>(std::chrono::steady_clock::now() - gameTimerStart).count()) {
-			gameTimerStart = std::chrono::steady_clock::now();
+		if (events.anyEvent()  || launch) {
+			events.transmitEvents();
 
-			if (game.gameplayState) {
-				renderer.render(&world, player.viewFrame);
-				renderer.render(&entityMap, player.viewFrame);
+			//Render world
+			if (game.inGame() && frameRate < Event::timeElapsed) {
+				renderer.update(&world, player.getViewFrame());
+				renderer.update(&entities, player.getViewFrame());
 			}
-			Menu* activeMenu = menuController.getActiveMenu();
+			
+			//Get menu if active and render
+			Menu* activeMenu = nullptr;
+			if (mainMenuController.isEnabled()) {
+				activeMenu = mainMenuController.getActiveMenu();
+			}
+			if (playerMenuController.isEnabled()) {
+				activeMenu = playerMenuController.getActiveMenu();
+			}
 			if (activeMenu != nullptr) {
-				ViewFrame menuFrame = activeMenu->getViewFrame((renderer.buffer.lineColumns / 2) - (activeMenu->w / 2), (renderer.buffer.lineRows / 2) - (activeMenu->h / 2));
-				renderer.render(activeMenu, menuFrame);
+				ViewFrame menuPlateFrame = menuPlate.getViewFrame((renderer.getWidth() / 2) - (menuPlate.w / 2), (renderer.getHeight() / 2) - (menuPlate.h / 2));
+				ViewFrame menuFrame = activeMenu->getViewFrame((renderer.getWidth() / 2) - (activeMenu->w / 2), (renderer.getHeight() / 2) - (activeMenu->h / 2));
+				renderer.update(&menuPlate, menuPlateFrame);
+				renderer.update(activeMenu, menuFrame);
 				if (!player.character.immovable) {
 					player.character.immovable = true;
 				}
@@ -146,6 +167,7 @@ int main()
 					player.character.immovable = false;
 				}
 			}
+			renderer.render();
 			
 		}
 		mainTheme.run();
@@ -153,18 +175,5 @@ int main()
 		
     }
 	mainTheme.stop();
+	launch = false;
 }
-
-
-/*
-Need to update interface with this line
-tags.emplace(tag, static_cast<size_t>(std::distance(observers.begin(),observers.end() - 1)));
-*/
-
-/*
-TODO
-Fix standalone release
-fix fullscreen
-contemplate event structure alterations
-get feedback
-*/

@@ -12,7 +12,6 @@
 
 class EntityMap : public Scape
 {
-
 	friend boost::serialization::access;
 
 	template <class Archive>
@@ -28,8 +27,8 @@ class EntityMap : public Scape
 	BOOST_SERIALIZATION_SPLIT_MEMBER()
 
 public:
-	const char at(size_t x, size_t y) override {
-		size_t index = getIndex(WorldCoordinate(x, y));
+	const char at(intmax_t x, intmax_t y) override {
+		size_t index = getIndex(x, y);
 		if (index == entities.size()) {
 			return 0;
 		}
@@ -45,7 +44,7 @@ public:
 
 	size_t getIndex(Entity entity);
 
-	size_t getIndex(WorldCoordinate position);
+	size_t getIndex(intmax_t x, intmax_t y);
 	
 };
 

@@ -99,17 +99,14 @@
     <ClCompile Include="Window.cpp">
       <Filter>Source Files\Engine\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="WorldCoordinate.cpp">
-      <Filter>Source Files\Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="Identity.cpp">
-      <Filter>Source Files\Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="MenuHandle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="TileMap.cpp">
       <Filter>Source Files\Game\Structure</Filter>
+    </ClCompile>
+    <ClCompile Include="MenuHandle.cpp">
+      <Filter>Source Files\Game\Structure</Filter>
+    </ClCompile>
+    <ClCompile Include="Plate.cpp">
+      <Filter>Source Files\Game\Elements</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -134,12 +131,6 @@
     <ClInclude Include="Music.h">
       <Filter>Header Files\Engine\Media</Filter>
     </ClInclude>
-    <ClInclude Include="WorldCoordinate.h">
-      <Filter>Header Files\Utility</Filter>
-    </ClInclude>
-    <ClInclude Include="Identity.h">
-      <Filter>Header Files\Utility</Filter>
-    </ClInclude>
     <ClInclude Include="EntityMap.h">
       <Filter>Header Files\Game\Structure</Filter>
     </ClInclude>
@@ -161,11 +152,14 @@
     <ClInclude Include="Tile.h">
       <Filter>Header Files\Game\Elements</Filter>
     </ClInclude>
-    <ClInclude Include="MenuHandle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TileMap.h">
       <Filter>Header Files\Game\Structure</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuHandle.h">
+      <Filter>Header Files\Game\Structure</Filter>
+    </ClInclude>
+    <ClInclude Include="Plate.h">
+      <Filter>Header Files\Game\Elements</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

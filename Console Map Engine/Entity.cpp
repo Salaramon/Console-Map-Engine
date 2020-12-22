@@ -1,5 +1,4 @@
 #include "Entity.h"
-#include "EntityMap.h"
 
 size_t Entity::nextID = 0;
 
@@ -19,17 +18,12 @@ char Entity::getGraphic()
 	return graphic;
 }
 
-WorldCoordinate Entity::getPosition()
+size_t Entity::getID()
 {
-	return WorldCoordinate(x,y);
+    return id;
 }
-/*
-void Entity::setOwner(EntityMap* entityMap)
-{
-	owner = entityMap;
-}
-*/
-void Entity::move(size_t x, size_t y)
+
+void Entity::move(double_t x, double_t y)
 {
 	Entity::x += x;
 	Entity::y += y;

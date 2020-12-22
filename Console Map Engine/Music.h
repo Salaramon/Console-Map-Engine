@@ -1,12 +1,9 @@
 #pragma once
 
-#include <vector>
 #include <string>
-#include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <fstream>
-#include <iostream>
 #include <Windows.h>
 #include <future>
 
@@ -16,41 +13,45 @@
 
 #include "csv.h"
 
+#include "Event.h"
+
 class Music
 {
 public:
 	Music();
 	~Music();
 
-    void loop();
-	void pause();
+	void load(std::string path);
+
+	//Checks in with the main thread to be able to continue playing.
 	void run();
+
     void play();
-    void load(std::string path);
+	void loop();
+	void pause();
 	void stop();
 private:
 
-    bool playing();
+	//play thread
+    bool _play();
 
     std::mutex noteMutex;
     std::condition_variable noteCondition;
-    //std::thread musicThread;
-    std::vector<int> noteID, noteFreq;
-
 	std::future<bool> playTask;
 
-    std::chrono::steady_clock::time_point trackTimePoint;
-	std::chrono::steady_clock::duration trackPauseDuration;
-
+	//music player variables
+	double_t trackCurrentPoint;
+	std::vector<int> noteID, noteFreq;
     smf::MidiEventList trackEventList;
-    int currentEvent = 0;
+	int currentEvent = 0;
+	int midiNumberOfEvents;
+
+	//Play state variables
     bool isPlaying;
 	bool isStopping;
     bool isLooping;
     bool isPaused;
 	bool isStop;
-
-    int midiNumberOfEvents;
 
 };
 

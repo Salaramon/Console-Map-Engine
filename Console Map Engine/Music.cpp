@@ -6,7 +6,8 @@ Music::Music()
 	isStop = false;
 	isLooping = false;
 	isPaused = false;
-	trackPauseDuration = std::chrono::steady_clock::duration::zero();
+
+	//Load correct note frequencies
     io::CSVReader<2> noteChart("FrequencyChart.csv");
     int note; double freq;
     while (noteChart.read_row(note, freq)) {
@@ -17,6 +18,7 @@ Music::Music()
 
 Music::~Music()
 {
+	//Make sure main thread does not continue before playing thread is done
 	stop();
 	playTask.wait();
 }
@@ -39,22 +41,22 @@ void Music::stop()
 {
 	isStop = true;
 	isPlaying = false;
+	isPaused = false;
 }
 
-bool Music::playing() //_play
+bool Music::_play() //_play
 {
-    trackTimePoint = std::chrono::steady_clock::now();
     std::unique_lock<std::mutex> owned_noteMutex(noteMutex);
 
+	//Music loop
     int i = 0;
     while (isPlaying) {
 		if (trackEventList[i].isNoteOn()) {
-			
 
 			auto nextNoteIterator = std::find(noteID.begin(), noteID.end(), (int)trackEventList[i][1]);
 			int noteIndex = std::distance(noteID.begin(), nextNoteIterator);
 			noteCondition.wait(owned_noteMutex, [&]() {
-				return (trackEventList[i].seconds < (std::chrono::duration<double>(std::chrono::steady_clock::now() - trackTimePoint - trackPauseDuration)).count() && !isPaused) || isStop;
+				return trackEventList[i].seconds < trackCurrentPoint || isStop;
 			});
 			Beep(noteFreq[noteIndex], static_cast<int>(1000 * trackEventList[i].getDurationInSeconds())); //If statemun dis bith up on quit
 
@@ -63,8 +65,7 @@ bool Music::playing() //_play
 		i++;
 		if (i >= midiNumberOfEvents) {
 			i = 0;
-			trackTimePoint = std::chrono::steady_clock::now();
-			trackPauseDuration = std::chrono::steady_clock::duration::zero();
+			trackCurrentPoint = 0;
 			if (!isLooping) {
 				isPlaying = false;
 			}
@@ -79,15 +80,11 @@ void Music::play()
 {
     if (!isPlaying) {
         isPlaying = true;
-        playTask = std::async(std::launch::async, &Music::playing, this);
+        playTask = std::async(std::launch::async, &Music::_play, this);
     }
     else {
 		if (isPaused) {
 			isPaused = false;
-			trackPauseDuration = std::chrono::steady_clock::now() - trackTimePoint;
-		}
-		else {
-			std::cout << "Music is already playing!" << std::endl;
 		}
 	}
 }
@@ -102,5 +99,8 @@ void Music::pause() {
 }
 
 void Music::run() {
-	noteCondition.notify_all();
+	if ((!isPaused || !isStop) && isPlaying) {
+		trackCurrentPoint += Event::deltaTime;
+		noteCondition.notify_all();
+	}
 }

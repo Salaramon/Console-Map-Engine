@@ -6,21 +6,20 @@
 class Window
 {
 public:
-	struct Setting{
-		enum class Window {
-			FULLSCREEN
-		};
+
+	enum class Setting {
+		FULLSCREEN
 	};
+
 	Window(size_t w, size_t h);
-	Window(Setting::Window setting);
-	bool setup(size_t w, size_t h);
-	bool setup(Setting::Window setting);
+	Window(Setting setting);
 	void resize(size_t w, size_t h);
-	void resize(Setting::Window setting);
+	void resize(Setting setting);
 
 	size_t height, width;
 private:
-	bool initialize();
+
+	void setup();
 
 	HWND window;
 	HANDLE windowHandle;
